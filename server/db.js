@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const dbPath = process.env.DB_PATH ? path.resolve(process.env.DB_PATH) : path.resolve(__dirname, 'yys_leggings.db');
+const dbPath = process.env.DB_PATH ? path.resolve(process.env.DB_PATH) : path.resolve(__dirname, 'yss_leggings.db');
 
 const rawDb = new sqlite3.Database(dbPath);
 
@@ -383,11 +383,52 @@ export async function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       full_name TEXT NOT NULL,
+      password TEXT DEFAULT 'admin123',
       role TEXT NOT NULL,
       status TEXT DEFAULT 'Active',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  try {
+    await db.run(`ALTER TABLE system_users ADD COLUMN password TEXT DEFAULT 'admin123'`);
+  } catch (e) {
+    // Ignore error if column already exists
+  }
+
+  // Ensure settings are present
+  const settingsCount = await db.get(`SELECT COUNT(*) as count FROM settings`);
+  if (!settingsCount || settingsCount.count === 0) {
+    const defaultSettings = [
+      ['company_name', 'YSS Leggings Manufacturing', 'general'],
+      ['gstin', '33AABBC1234F1Z1', 'tax'],
+      ['factory_location', 'Unit 1, SIDCO Industrial Estate, Tiruppur - 641603', 'general'],
+      ['support_phone', '+91 98421 23456', 'general'],
+      ['default_wholesale_rate', '180', 'pricing'],
+      ['default_retail_rate', '299', 'pricing'],
+      ['min_fabric_threshold_kg', '20', 'inventory'],
+      ['min_finished_stock_pcs', '25', 'inventory']
+    ];
+    for (const [k, v, cat] of defaultSettings) {
+      await db.run(`INSERT OR IGNORE INTO settings (key, value, category) VALUES (?, ?, ?)`, [k, v, cat]);
+    }
+  }
+
+  // Ensure default system users are present
+  const usersCount = await db.get(`SELECT COUNT(*) as count FROM system_users`);
+  if (!usersCount || usersCount.count === 0) {
+    const defaultUsers = [
+      ['admin', 'YSS Owner (Admin)', 'Admin', 'admin123'],
+      ['manager', 'Gopal (Factory Manager)', 'Manager', 'manager123'],
+      ['cutting_sup', 'Karthik (Cutting Supervisor)', 'Cutting Supervisor', 'cutting123'],
+      ['stitching_sup', 'Muthu (Stitching Supervisor)', 'Stitching Supervisor', 'stitching123'],
+      ['packaging_worker', 'Mani (Packaging / Stock)', 'Packaging / Stock', 'pack123'],
+      ['sales_pos', 'Priya (Sales Counter User)', 'Sales User', 'sales123']
+    ];
+    for (const [u, name, role, pass] of defaultUsers) {
+      await db.run(`INSERT OR IGNORE INTO system_users (username, full_name, role, password) VALUES (?, ?, ?, ?)`, [u, name, role, pass]);
+    }
+  }
 
   await seedInitialData();
 }
@@ -396,7 +437,7 @@ async function seedInitialData() {
   const colorsCount = await db.get(`SELECT COUNT(*) as count FROM colors`);
   if (colorsCount.count > 0) return; // Already seeded
 
-  console.log('Seeding initial master data and demo inventory for YYS Leggings...');
+  console.log('Seeding initial master data and demo inventory for YSS Leggings...');
 
   // 1. Colors
   const colors = [
@@ -602,7 +643,7 @@ async function seedInitialData() {
 
   // 16. Business Settings (Section 38)
   const defaultSettings = [
-    ['company_name', 'YYS Leggings Manufacturing', 'general'],
+    ['company_name', 'YSS Leggings Manufacturing', 'general'],
     ['gstin', '33AABBC1234F1Z1', 'tax'],
     ['factory_location', 'Unit 1, SIDCO Industrial Estate, Tiruppur - 641603', 'general'],
     ['support_phone', '+91 98421 23456', 'general'],
@@ -617,7 +658,7 @@ async function seedInitialData() {
 
   // 17. User Roles (Section 3)
   const defaultUsers = [
-    ['admin', 'YYS Owner (Admin)', 'Admin'],
+    ['admin', 'YSS Owner (Admin)', 'Admin'],
     ['manager', 'Gopal (Factory Manager)', 'Manager'],
     ['cutting_sup', 'Karthik (Cutting Supervisor)', 'Cutting Supervisor'],
     ['stitching_sup', 'Muthu (Stitching Supervisor)', 'Stitching Supervisor'],
@@ -631,7 +672,7 @@ async function seedInitialData() {
   // 18. Initial Audit Log Entry (Section 37)
   await db.run(
     `INSERT INTO audit_logs (user_name, action, module, details)
-     VALUES ('Admin', 'System Initialized', 'Setup', 'YYS Leggings ERP database configured and master catalog initialized')`
+     VALUES ('Admin', 'System Initialized', 'Setup', 'YSS Leggings ERP database configured and master catalog initialized')`
   );
 
   console.log('Database initialization and seeding completed successfully!');

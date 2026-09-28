@@ -15,6 +15,7 @@ import dashboardRouter from './routes/dashboard.js';
 import qualityRouter from './routes/quality.js';
 import settingsRouter from './routes/settings.js';
 import auditRouter from './routes/audit.js';
+import authRouter from './routes/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/api/auth', authRouter);
 app.use('/api/master', masterRouter);
 app.use('/api/purchases', purchasesRouter);
 app.use('/api/production', productionRouter);
@@ -39,7 +41,7 @@ app.use('/api/audit', auditRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'YYS Leggings Management API', time: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'YSS Leggings Management API', time: new Date().toISOString() });
 });
 
 // Serve frontend static files if dist exists (production build)
@@ -56,7 +58,7 @@ if (fs.existsSync(distPath)) {
 
 // Start listening immediately so Hostinger and cloud hosting platforms detect listen() instantly
 const server = app.listen(PORT, () => {
-  console.log(`🚀 YYS Leggings Backend API running on http://localhost:${PORT}`);
+  console.log(`🚀 YSS Leggings Backend API running on http://localhost:${PORT}`);
 });
 
 // Initialize database asynchronously

@@ -94,7 +94,7 @@ export default function SettingsView() {
         <div className="card" style={{ maxWidth: '800px' }}>
           <div className="card-header">
             <div>
-              <h3 className="card-title">YYS Enterprise & Factory Settings</h3>
+              <h3 className="card-title">YSS Enterprise & Factory Settings</h3>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                 Configure company identity, GSTIN for invoices, and threshold parameters for low-stock triggers.
               </p>

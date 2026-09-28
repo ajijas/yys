@@ -20,9 +20,12 @@ import {
   History,
   Settings as SettingsIcon,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  LogOut
 } from 'lucide-react';
 
+import yssLogo from './assets/YSS.png';
+import LoginView from './components/LoginView';
 import DashboardView from './components/DashboardView';
 import MasterDataView from './components/MasterDataView';
 import PurchasesView from './components/PurchasesView';
@@ -41,7 +44,17 @@ export default function App() {
 
   // Theme State - Default to 'light' as explicitly requested!
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('yys_theme') || 'light';
+    return localStorage.getItem('yss_theme') || localStorage.getItem('yys_theme') || 'light';
+  });
+
+  // Current User Authentication State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('yss_user') || sessionStorage.getItem('yss_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
   });
 
   // Voice / Smart Quick Command State (Section 41 & 42)
@@ -51,11 +64,31 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('yys_theme', theme);
+    localStorage.setItem('yss_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  const handleLogout = async () => {
+    if (window.confirm('Are you sure you want to log out of YSS Leggings ERP?')) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            username: currentUser?.username, 
+            full_name: currentUser?.full_name 
+          })
+        });
+      } catch (e) {
+        // Continue with local cleanup
+      }
+      localStorage.removeItem('yss_user');
+      sessionStorage.removeItem('yss_user');
+      setCurrentUser(null);
+    }
   };
 
   // Poll alert count for notifications badge
@@ -168,18 +201,56 @@ export default function App() {
     }
   };
 
+  // Render Login Screen if no authenticated user session
+  if (!currentUser) {
+    return (
+      <div data-theme={theme}>
+        <LoginView 
+          onLoginSuccess={(user) => setCurrentUser(user)} 
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="app-container" data-theme={theme}>
       {/* Sidebar Navigation */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="brand-icon">
-            <Package size={22} color="#fff" />
+          <div className="brand-icon" style={{ padding: '0', background: 'transparent', width: '38px', height: '38px', overflow: 'hidden' }}>
+            <img 
+              src={yssLogo} 
+              alt="YSS Logo" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
+            />
           </div>
           <div>
-            <div className="brand-name">YYS LEGGINGS</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Manufacturing & ERP</div>
+            <div className="brand-name">YSS LEGGINGS</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>A Brand of Sillett ERP</div>
           </div>
+        </div>
+
+        {/* Current Active User Status Card */}
+        <div className="sidebar-user-card">
+          <div className="sidebar-user-info">
+            <div className="sidebar-user-avatar">
+              {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div className="sidebar-user-names">
+              <span className="sidebar-user-fullname">{currentUser?.full_name || currentUser?.username}</span>
+              <span className="sidebar-user-role-badge">{currentUser?.role || 'User'}</span>
+            </div>
+          </div>
+          <button 
+            type="button"
+            className="sidebar-logout-btn" 
+            onClick={handleLogout}
+            title="Log Out of System"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
 
         <nav className="sidebar-nav">
@@ -356,6 +427,57 @@ export default function App() {
                 <span>{alertCount} Alert{alertCount > 1 ? 's' : ''}</span>
               </button>
             )}
+
+            {/* User Profile Pill in Top Header */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              background: 'var(--bg-card)', 
+              border: '1px solid var(--border-subtle)', 
+              borderRadius: 'var(--radius-full)', 
+              padding: '0.3rem 0.65rem 0.3rem 0.4rem' 
+            }}>
+              <div style={{ 
+                width: '26px', 
+                height: '26px', 
+                borderRadius: '50%', 
+                background: 'linear-gradient(135deg, #e11d48, #6366f1)', 
+                color: '#fff', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                fontSize: '0.75rem', 
+                fontWeight: 700 
+              }}>
+                {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {currentUser?.full_name || currentUser?.username}
+                </span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--accent-primary)' }}>
+                  {currentUser?.role}
+                </span>
+              </div>
+              <button 
+                type="button"
+                onClick={handleLogout}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: 'var(--text-muted)', 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  padding: '4px',
+                  marginLeft: '0.2rem'
+                }}
+                title="Log Out of System"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
           </div>
         </header>
 

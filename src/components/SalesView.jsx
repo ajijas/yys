@@ -719,7 +719,7 @@ export default function SalesView() {
             <div className="modal-body">
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
                 <div>
-                  <h4 style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--accent-primary)' }}>YYS LEGGINGS</h4>
+                  <h4 style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--accent-primary)' }}>YSS LEGGINGS</h4>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Manufacturing & Wholesale Hub</div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Tiruppur, Tamil Nadu</div>
                 </div>
