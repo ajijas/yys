@@ -54,19 +54,16 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-async function start() {
-  try {
-    await initDatabase();
-    app.listen(PORT, () => {
-      console.log(`🚀 YYS Leggings Backend API running on http://localhost:${PORT}`);
-    });
-  } catch (err) {
-    console.error('Failed to initialize database or start server:', err);
-    process.exit(1);
-  }
-}
+// Start listening immediately so Hostinger and cloud hosting platforms detect listen() instantly
+const server = app.listen(PORT, () => {
+  console.log(`🚀 YYS Leggings Backend API running on http://localhost:${PORT}`);
+});
 
-start();
+// Initialize database asynchronously
+initDatabase().catch(err => {
+  console.error('Failed to initialize database:', err);
+});
 
 export default app;
+
 
